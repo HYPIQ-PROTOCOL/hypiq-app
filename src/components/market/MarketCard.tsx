@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Progress } from '@/components/ui/progress'
 import { BettingModal } from '@/components/modals/BettingModal'
-import { useWallet } from '@/contexts/WalletContext'
+import { useWallet } from '@/contexts/PrivyWalletContext'
 import { formatCurrency, formatLargeNumber } from '@/lib/utils'
 import { TrendingUp, Users, DollarSign, Zap, Timer, Wallet } from 'lucide-react'
 

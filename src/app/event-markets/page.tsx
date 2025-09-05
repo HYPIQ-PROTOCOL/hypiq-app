@@ -4,7 +4,7 @@ import { EventMarketFeaturedCard } from '@/components/sections/EventMarketFeatur
 import EventGrid from '@/components/sections/EventGrid'
 import MarketHeatmap from '@/components/sections/MarketHeatmap'
 
-export default function HomePage() {
+export default function EventMarketsPage() {
   return (
     <div className="min-h-screen bg-hypiq-platinum text-hypiq-black">
       <Navigation />

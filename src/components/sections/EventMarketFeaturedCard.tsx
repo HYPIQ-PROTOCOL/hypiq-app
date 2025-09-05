@@ -7,75 +7,77 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { OddsProgressBar } from '@/components/shared/OddsProgressBar'
 import { MarketChart } from '@/components/shared/MarketChart'
-import { PositionBadge } from '@/components/shared/PositionBadge'
 
-// Whale position data type
-type WhalePosition = {
+// Event market data type
+type EventMarket = {
   id: string
-  type: 'LONG' | 'SHORT'
-  asset: string
-  whaleId: string
-  amount: string
   title: string
   description: string
-  odds: {
-    profit: number
-    loss: number
-  }
+  category: string
+  options: {
+    name: string
+    percent: number
+  }[]
+  volume: number
+  imageUrl?: string
 }
 
-// Mock whale positions data
-const whalePositions: WhalePosition[] = [
+// Mock event markets data for featured section
+const featuredEvents: EventMarket[] = [
   {
     id: '1',
-    type: 'LONG',
-    asset: 'Bitcoin',
-    whaleId: '#420',
-    amount: '$50M',
-    title: 'WHALE BITCOIN LONG',
-    description: 'Massive bullish position on BTC breakthrough',
-    odds: {
-      profit: 67,
-      loss: 33
-    }
+    title: 'Will ETH be above $4k by year end?',
+    description: 'Major price prediction for Ethereum as institutional adoption grows',
+    category: 'CRYPTO',
+    options: [
+      { name: 'Yes', percent: 37 },
+      { name: 'No', percent: 63 }
+    ],
+    volume: 5300000,
+    imageUrl: 'https://picsum.photos/seed/eth/96/96',
   },
   {
     id: '2',
-    type: 'SHORT',
-    asset: 'Ethereum',
-    whaleId: '#888',
-    amount: '$25M',
-    title: 'WHALE ETHEREUM SHORT',
-    description: 'High-conviction bearish bet against ETH',
-    odds: {
-      profit: 45,
-      loss: 55
-    }
+    title: 'Will Bitcoin reach $150k before 2026?',
+    description: 'Long-term BTC price target based on halving cycles and adoption',
+    category: 'CRYPTO',
+    options: [
+      { name: 'Yes', percent: 48 },
+      { name: 'No', percent: 52 }
+    ],
+    volume: 254539,
+    imageUrl: 'https://picsum.photos/seed/btc/96/96',
+  },
+  {
+    id: '3',
+    title: 'Next US Presidential Election Winner?',
+    description: 'Political prediction market for the upcoming presidential election',
+    category: 'POLITICS',
+    options: [
+      { name: 'J.D. Vance', percent: 27 },
+      { name: 'Gavin Newsom', percent: 13 }
+    ],
+    volume: 1262355,
+    imageUrl: 'https://picsum.photos/seed/politics/96/96',
   }
 ]
 
-interface WhaleMarketFeaturedCardProps {
+interface EventMarketFeaturedCardProps {
   theme?: 'light' | 'dark'
   showNavigation?: boolean
 }
 
-export function WhaleMarketFeaturedCard({ theme = 'light', showNavigation = true }: WhaleMarketFeaturedCardProps = {}) {
-  // Map asset names to logo file keys in /public/coin-logos
-  const getCoinKeyFromAsset = (asset: string): string => {
-    const key = asset.trim().toLowerCase().replace(/\s+/g, '')
-    // In case of any special mappings later
-    return key
-  }
-  const [currentPositionIndex, setCurrentPositionIndex] = useState(0)
+export function EventMarketFeaturedCard({ theme = 'dark', showNavigation = true }: EventMarketFeaturedCardProps = {}) {
+  const [currentEventIndex, setCurrentEventIndex] = useState(0)
   const [isAnimating, setIsAnimating] = useState<'next' | 'prev' | null>(null)
-  const currentPosition = whalePositions[currentPositionIndex]
+  const currentEvent = featuredEvents[currentEventIndex]
   const isDark = theme === 'dark'
 
   const handlePrevious = () => {
     if (!showNavigation) return
     setIsAnimating('prev')
     setTimeout(() => {
-      setCurrentPositionIndex((prev) => prev === 0 ? whalePositions.length - 1 : prev - 1)
+      setCurrentEventIndex((prev) => prev === 0 ? featuredEvents.length - 1 : prev - 1)
       setIsAnimating(null)
     }, 200)
   }
@@ -84,10 +86,11 @@ export function WhaleMarketFeaturedCard({ theme = 'light', showNavigation = true
     if (!showNavigation) return
     setIsAnimating('next')
     setTimeout(() => {
-      setCurrentPositionIndex((prev) => prev === whalePositions.length - 1 ? 0 : prev + 1)
+      setCurrentEventIndex((prev) => prev === featuredEvents.length - 1 ? 0 : prev + 1)
       setIsAnimating(null)
     }, 200)
   }
+
   const generateChartData = useMemo(() => {
     return () => {
       // Deterministic PRNG to avoid hydration mismatches between SSR and client
@@ -104,48 +107,58 @@ export function WhaleMarketFeaturedCard({ theme = 'light', showNavigation = true
       })()
 
       const hours = ['3:26am', '4:58am', '6:31am', '8:04am', '2:36pm']
-      const { profit: profitTarget, loss: lossTarget } = currentPosition.odds
+      const yesTarget = currentEvent.options[0]?.percent || 50
+      const noTarget = currentEvent.options[1]?.percent || 50
       
       return Array.from({ length: 50 }, (_, i) => {
         const timeProgress = i / 50
         const convergence = Math.pow(timeProgress, 1.5) // Stronger convergence toward end
         
         // Start with some variation and converge to actual percentages
-        const startVariationProfit = profitTarget + (prng() - 0.5) * 20
-        const startVariationLoss = lossTarget + (prng() - 0.5) * 20
+        const startVariationYes = yesTarget + (prng() - 0.5) * 20
+        const startVariationNo = noTarget + (prng() - 0.5) * 20
         
         // Add some realistic market movement
-        const marketMovementProfit = Math.sin(timeProgress * Math.PI * 3) * 8 * (1 - convergence)
-        const marketMovementLoss = Math.cos(timeProgress * Math.PI * 2.5) * 8 * (1 - convergence)
+        const marketMovementYes = Math.sin(timeProgress * Math.PI * 3) * 8 * (1 - convergence)
+        const marketMovementNo = Math.cos(timeProgress * Math.PI * 2.5) * 8 * (1 - convergence)
         
         // Noise decreases over time to show convergence
-        const noiseProfit = (prng() - 0.5) * 6 * (1 - convergence * 0.8)
-        const noiseLoss = (prng() - 0.5) * 6 * (1 - convergence * 0.8)
+        const noiseYes = (prng() - 0.5) * 6 * (1 - convergence * 0.8)
+        const noiseNo = (prng() - 0.5) * 6 * (1 - convergence * 0.8)
         
         // Interpolate between start variation and actual percentage
-        const profitValue = startVariationProfit * (1 - convergence) + profitTarget * convergence + marketMovementProfit + noiseProfit
-        const lossValue = startVariationLoss * (1 - convergence) + lossTarget * convergence + marketMovementLoss + noiseLoss
+        const yesValue = startVariationYes * (1 - convergence) + yesTarget * convergence + marketMovementYes + noiseYes
+        const noValue = startVariationNo * (1 - convergence) + noTarget * convergence + marketMovementNo + noiseNo
         
         return {
           time: hours[Math.floor(i / 10)] || `${i}h`,
-          profit: Math.max(5, Math.min(95, profitValue)),
-          loss: Math.max(5, Math.min(95, lossValue)),
+          yes: Math.max(5, Math.min(95, yesValue)),
+          no: Math.max(5, Math.min(95, noValue)),
         }
       })
     }
-  }, [currentPosition])
+  }, [currentEvent])
 
   const chartConfig = {
-    profit: {
-      label: "Will Profit",
+    yes: {
+      label: currentEvent.options[0]?.name || "Yes",
       color: "#34d399",
     },
-    loss: {
-      label: "Will Lose", 
+    no: {
+      label: currentEvent.options[1]?.name || "No", 
       color: "#ef4444",
     },
   }
-  const chartTicks = ['3:26am', '4:58am', '6:31am', '8:04am', '2:36pm']
+
+  const formatVolume = (volume: number) => {
+    if (volume >= 1000000) {
+      return `$${(volume / 1000000).toFixed(1)}M`
+    } else if (volume >= 1000) {
+      return `$${(volume / 1000).toFixed(0)}K`
+    }
+    return `$${volume}`
+  }
+
   return (
     <div className="relative">
       {/* Outer navigation arrows */}
@@ -183,82 +196,70 @@ export function WhaleMarketFeaturedCard({ theme = 'light', showNavigation = true
       <Card className={`relative overflow-hidden rounded-xl p-4 md:p-6 w-full transition-transform duration-200 ease-out ${
         isDark 
           ? 'bg-white/10 border border-white/20 text-white shadow-lg hover:shadow-2xl'
-          : 'bg-white border border-gray-200 text-gray-900 shadow-lg hover:shadow-xl hover:border-[#0e241f]/20'
+          : 'bg-hypiq-white border border-hypiq-anti-flash text-hypiq-black shadow-lg hover:shadow-xl hover:border-hypiq-platinum'
       } ${isAnimating === 'next' ? 'translate-x-4 opacity-90' : ''} ${isAnimating === 'prev' ? '-translate-x-4 opacity-90' : ''}`}>
-        {/* Global background icon anchored to card edges (not affected by inner padding) */}
-        <div className="pointer-events-none absolute left-[-15px] bottom-[-60px] opacity-30">
-          <div className="relative w-[16.5rem] h-[16.5rem]">
-            <Image
-              src={currentPosition.type === 'LONG' ? '/long.svg' : '/short.svg'}
-              alt={`${currentPosition.type} position`}
-              fill
-              className="object-contain object-left-bottom"
-              priority
-            />
-          </div>
-        </div>
+        
       <div className="relative flex flex-col md:flex-row md:items-center gap-6 md:gap-8">
-        {/* Left block - whale position with background */}
+        {/* Left block - event market info */}
         <div className="relative md:w-[48%] overflow-hidden rounded-lg">
           
           {/* Content overlay */}
           <div className="relative p-4 z-10">
-            {/* Header: Position Type + Date */}
+            {/* Header: Category + Volume */}
             <div className="flex items-center justify-between mb-4">
-              <PositionBadge
-                position={currentPosition.type}
-                theme={theme}
-                size="sm"
-                variant="badge"
-              />
-              <span className={`text-xs font-mono ${isDark ? 'text-white/40' : 'text-gray-500'}`}>Dec 24</span>
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                isDark 
+                  ? 'bg-green-400/20 text-green-400 border border-green-400/30'
+                  : 'bg-green-100 text-green-800 border border-green-200'
+              }`}>
+                {currentEvent.category}
+              </span>
+              <span className={`text-xs font-mono ${isDark ? 'text-white/40' : 'text-gray-500'}`}>
+                {formatVolume(currentEvent.volume)}
+              </span>
             </div>
 
-            {/* Compact headline with asset info */}
+            {/* Market image and title */}
             <div className="flex items-center gap-3 md:gap-4 mb-3 md:mb-4">
               <div className={`w-10 h-10 md:w-12 md:h-12 rounded-md overflow-hidden shrink-0 flex items-center justify-center ${
-                isDark ? 'border border-white/15 bg-white/10' : 'border border-gray-200 bg-white'
+                isDark ? 'border border-white/15 bg-white/10' : 'border border-hypiq-anti-flash bg-hypiq-white'
               }`}>
                 <Image 
-                  src={`/coin-logos/${getCoinKeyFromAsset(currentPosition.asset)}.png`} 
-                  alt={currentPosition.asset} 
+                  src={currentEvent.imageUrl || 'https://picsum.photos/seed/placeholder/96/96'} 
+                  alt={currentEvent.title} 
                   width={40} 
                   height={40} 
-                  className={`w-10 h-10 md:w-12 md:h-12 object-contain ${getCoinKeyFromAsset(currentPosition.asset) === 'xrp' ? 'invert' : ''}`} 
+                  className="w-10 h-10 md:w-12 md:h-12 object-cover rounded" 
+                  style={{ width: 'auto', height: 'auto' }}
                 />
               </div>
-              <h1 className={`text-lg md:text-2xl font-black leading-tight tracking-tight ${
-                isDark ? 'text-white' : 'text-gray-900'
+              <h1 className={`featured-title text-lg md:text-2xl font-black leading-tight tracking-tight ${
+                isDark ? 'text-white' : 'text-hypiq-black'
               }`}>
-                {`WHALE ${currentPosition.asset.toUpperCase()} ${currentPosition.type}`}
+                {currentEvent.title}
               </h1>
             </div>
 
-
-
-            {/* Whale Position Odds */}
+            {/* Event Options */}
             <div className="space-y-3 mb-4">
-              <OddsProgressBar
-                label="Will Profit"
-                percentage={currentPosition.odds.profit}
-                isProfit={true}
-                theme={theme}
-              />
-              <OddsProgressBar
-                label="Will Lose"
-                percentage={currentPosition.odds.loss}
-                isProfit={false}
-                theme={theme}
-              />
+              {currentEvent.options.map((option, index) => (
+                <OddsProgressBar
+                  key={option.name}
+                  label={option.name}
+                  percentage={option.percent}
+                  isProfit={index === 0}
+                  theme={theme}
+                />
+              ))}
             </div>
 
             {/* Bottom meta */}
-            <div className={`pt-3 border-t ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
-              <p className={`text-xs mb-2 leading-relaxed ${isDark ? 'text-white/70' : 'text-gray-600'}`}>
-                {currentPosition.description}
+            <div className={`pt-3 border-t ${isDark ? 'border-white/10' : 'border-hypiq-anti-flash'}`}>
+              <p className={`text-xs mb-2 leading-relaxed ${isDark ? 'text-white/70' : 'text-hypiq-black/70'}`}>
+                {currentEvent.description}
               </p>
-              <div className={`text-[10px] font-mono tracking-wider ${isDark ? 'text-white/50' : 'text-gray-500'}`}>
-                {currentPosition.amount} POSITION • WHALE {currentPosition.whaleId} • LIVE
+              <div className={`text-[10px] font-mono tracking-wider ${isDark ? 'text-white/50' : 'text-hypiq-black/50'}`}>
+                VOLUME {formatVolume(currentEvent.volume)} • LIVE MARKET
               </div>
             </div>
           </div>
@@ -266,22 +267,22 @@ export function WhaleMarketFeaturedCard({ theme = 'light', showNavigation = true
 
         {/* Vertical divider between columns */}
           <div className={`hidden md:flex w-px self-stretch bg-gradient-to-b from-transparent to-transparent ${
-            isDark ? 'via-white/30' : 'via-gray-300'
+            isDark ? 'via-white/30' : 'via-hypiq-black/30'
           }`} />
 
         {/* Right block - options + chart */}
         <div className="md:w-[52%] flex flex-col justify-center">
           {/* Legend centered above the chart with same width as chart */}
           <div className={`mx-auto max-w-[420px] flex items-center justify-center gap-4 md:gap-6 mb-2 md:mb-3 text-[11px] md:text-xs ${
-            isDark ? 'text-white/80' : 'text-gray-600'
+            isDark ? 'text-white/80' : 'text-hypiq-black/70'
           }`}>
             <div className="flex items-center gap-1.5">
               <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
-              <span>Will Profit ({currentPosition.odds.profit}%)</span>
+              <span>{currentEvent.options[0]?.name} ({currentEvent.options[0]?.percent}%)</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="inline-block w-2.5 h-2.5 rounded-full bg-red-400"></span>
-              <span>Will Lose ({currentPosition.odds.loss}%)</span>
+              <span>{currentEvent.options[1]?.name} ({currentEvent.options[1]?.percent}%)</span>
             </div>
           </div>
           {/* Options moved to left; keep spacing before divider */}
@@ -289,7 +290,7 @@ export function WhaleMarketFeaturedCard({ theme = 'light', showNavigation = true
            {/* Centered half-length divider (hidden on mobile to reduce clutter) */}
            <div className="hidden md:flex justify-center mb-3">
             <div className={`h-px w-1/2 bg-gradient-to-r from-transparent to-transparent ${
-              isDark ? 'via-white/30' : 'via-gray-300'
+              isDark ? 'via-white/30' : 'via-hypiq-black/30'
             }`}></div>
           </div>
           

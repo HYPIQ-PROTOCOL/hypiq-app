@@ -5,13 +5,16 @@ import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Wallet, DollarSign, User, LogOut, Bell, TrendingUp } from 'lucide-react'
-import { usePathname } from 'next/navigation'
-import { useWallet } from '@/contexts/WalletContext'
+import { usePathname, useSearchParams, useRouter } from 'next/navigation'
+import { useWallet } from '@/contexts/PrivyWalletContext'
+import { Suspense } from 'react'
 
-export function Navigation() {
+function NavigationContent() {
   const { isConnected, address, balance, connect, disconnect } = useWallet()
   const pathname = usePathname()
-  const isWhaleMarkets = pathname === '/' || pathname?.startsWith('/market/')
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const isEventMarkets = pathname === '/' || pathname?.startsWith('/event-markets')
 
   const formatAddress = (addr: string) => {
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`
@@ -25,23 +28,82 @@ export function Navigation() {
     <nav className="bg-gray-50 border-b border-gray-200 sticky top-0 z-50 shadow-sm">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
-          {/* Left side - Logo and main nav */}
-          <div className="flex items-center space-x-8">
-            <Link href="/" className="flex items-center space-x-3">
-              <div className="w-16 h-16 rounded-lg overflow-hidden flex items-center justify-center">
-                <Image src="/HYPIQ-logo-black.png" alt="HYPIQ" width={64} height={64} className="object-contain" />
+          {/* Left side - Logo */}
+          <div className="flex items-center">
+            <Link href="/" className="flex items-center">
+              <div className="w-24 h-12 flex items-center justify-center">
+                <Image 
+                  src="/Logo-text.svg" 
+                  alt="HYPIQ" 
+                  width={120} 
+                  height={24} 
+                  className="object-contain" 
+                  style={{ width: 'auto', height: 'auto' }}
+                />
               </div>
-              <span className="text-xl font-bold text-gray-900">HYPIQ</span>
             </Link>
-
-
           </div>
 
-          {/* Center - (Search removed per spec) */}
-          <div className="hidden lg:flex flex-1 max-w-lg mx-8" />
+          {/* Center - Categories */}
+          <div className="flex items-center gap-3 overflow-x-auto hide-scrollbar">
+            {[
+              { label: 'TRENDING', key: 'all', icon: true },
+              { label: 'POLITICS', key: 'politics' },
+              { label: 'ECONOMICS', key: 'economics' },
+              { label: 'SPORTS', key: 'sports' },
+              { label: 'CRYPTO', key: 'crypto' },
+              { label: 'TECH', key: 'tech' },
+              { label: 'HEALTH', key: 'health' },
+              { label: 'WORLD', key: 'world' }
+            ].map(({ label, key, icon }) => {
+              const currentCategory = searchParams.get('category') || 'all'
+              const isActive = currentCategory === key
+              
+              // Map categories to heatmap colors
+              const getCategoryColors = (categoryKey: string) => {
+                switch(categoryKey) {
+                  case 'economics':
+                    return 'bg-blue-100 text-blue-800 border-blue-200'
+                  case 'sports':
+                    return 'bg-green-100 text-green-800 border-green-200'
+                  case 'crypto':
+                    return 'bg-orange-100 text-orange-800 border-orange-200'
+                  case 'tech':
+                    return 'bg-purple-100 text-purple-800 border-purple-200'
+                  case 'health':
+                    return 'bg-red-100 text-red-800 border-red-200'
+                  case 'politics':
+                    return 'bg-cyan-100 text-cyan-800 border-cyan-200'
+                  case 'world':
+                    return 'bg-pink-100 text-pink-800 border-pink-200'
+                  default:
+                    return 'bg-indigo-100 text-indigo-800 border-indigo-200'
+                }
+              }
+              
+              return (
+                <button
+                  key={label}
+                  onClick={() => {
+                    const params = new URLSearchParams(searchParams.toString())
+                    params.set('category', key)
+                    router.push(`/?${params.toString()}`)
+                  }}
+                  className={`px-3 py-1 rounded-full text-xs font-medium transition-all border ${
+                    isActive 
+                      ? getCategoryColors(key) + ' font-semibold'
+                      : 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200'
+                  } ${icon ? 'flex items-center gap-1.5' : ''}`}
+                >
+                  {icon && <TrendingUp className="h-3 w-3" />}
+                  {label}
+                </button>
+              )
+            })}
+          </div>
 
           {/* Right side - Actions and account */}
-            <div className="flex items-center space-x-4 mt-1">
+          <div className="flex items-center space-x-4">
             {isConnected ? (
               <>
                 {/* Notifications */}
@@ -80,7 +142,7 @@ export function Navigation() {
                 {/* Connect Wallet Button */}
                 <Button 
                   onClick={connect}
-                  className="bg-black/60 hover:bg-black/40 border border-white/20 backdrop-blur-sm text-white shadow-lg"
+                  className="bg-gray-50 hover:bg-gray-50 border border-black text-black hover:text-black shadow-[inset_4px_4px_8px_#d1d5db,inset_-4px_-4px_8px_#ffffff] transition-all duration-200"
                   size="sm"
                 >
                   <Wallet className="h-4 w-4 mr-2" />
@@ -90,63 +152,15 @@ export function Navigation() {
             )}
           </div>
         </div>
-        {/* Secondary category bar */}
-        {isWhaleMarkets ? (
-          <div className="flex items-center gap-3 py-2 overflow-x-auto hide-scrollbar">
-            {[
-              { label: 'TRENDING', key: 'all', icon: true },
-              { label: 'BITCOIN', key: 'bitcoin' },
-              { label: 'ETHEREUM', key: 'ethereum' },
-              { label: 'HYPE', key: 'hype' },
-              { label: 'XRP', key: 'xrp' },
-              { label: 'BNB', key: 'bnb' },
-              { label: 'SOLANA', key: 'solana' },
-              { label: 'DOGE', key: 'doge' },
-              { label: 'OPTIONS', key: 'options' }
-            ].map(({ label, key, icon }) => {
-              let isActive = false
-              if (typeof window !== 'undefined') {
-                const params = new URLSearchParams(window.location.search)
-                const currentCategory = params.get('category') || 'all'
-                isActive = currentCategory === key
-              }
-              
-              return (
-                <button
-                  key={label}
-                  onClick={() => {
-                    const params = new URLSearchParams(window.location.search)
-                    params.set('category', key)
-                    const path = '/'
-                    const url = `${path}?${params.toString()}`
-                    window.location.assign(url)
-                  }}
-                  className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
-                    isActive 
-                      ? 'bg-[#0e241f] border border-[#0e241f] text-white font-semibold'
-                      : 'bg-gray-100 border border-gray-200 text-gray-700 hover:bg-gray-200'
-                  } ${icon ? 'flex items-center gap-1.5' : ''}`}
-                >
-                  {icon && <TrendingUp className="h-3 w-3" />}
-                  {label}
-                </button>
-              )
-            })}
-          </div>
-        ) : (
-          <div className="flex items-center gap-3 py-2 overflow-x-auto hide-scrollbar">
-            <span className="px-3 py-1 rounded-full bg-[#0e241f] border border-[#0e241f] text-white text-xs font-semibold flex items-center gap-1.5">
-              <TrendingUp className="h-3 w-3" />
-              TRENDING
-            </span>
-            {['POLITICS','ECONOMICS','SPORTS','CRYPTO','TECH','HEALTH','WORLD'].map((label) => (
-              <span key={label} className="px-3 py-1 rounded-full bg-gray-100 border border-gray-200 text-gray-700 text-xs font-medium">
-                {label}
-              </span>
-            ))}
-          </div>
-        )}
       </div>
     </nav>
+  )
+}
+
+export function Navigation() {
+  return (
+    <Suspense fallback={<div className="h-16 bg-gray-50 border-b border-gray-200" />}>
+      <NavigationContent />
+    </Suspense>
   )
 } 

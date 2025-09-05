@@ -4,6 +4,21 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
 
+  // Add headers to allow Privy's GTM scripts
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'Content-Security-Policy',
+            value: "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://auth.privy.io https://www.googletagmanager.com https://www.google-analytics.com https://ssl.google-analytics.com https://tagmanager.google.com; script-src-elem 'self' 'unsafe-inline' https://auth.privy.io https://www.googletagmanager.com https://www.google-analytics.com https://ssl.google-analytics.com https://tagmanager.google.com",
+          },
+        ],
+      },
+    ]
+  },
+
   images: {
     unoptimized: false,
     remotePatterns: [

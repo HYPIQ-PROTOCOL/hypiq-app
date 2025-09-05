@@ -1,6 +1,6 @@
 'use client'
 
-import { useWallet } from '@/contexts/WalletContext'
+import { useWallet } from '@/contexts/PrivyWalletContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -135,7 +135,7 @@ export default function PositionsPage() {
               <Target className="h-16 w-16 text-muted-foreground mx-auto mb-6" />
               <h3 className="text-xl font-semibold mb-2">No positions yet</h3>
               <p className="text-muted-foreground mb-6">
-                Start by placing your first bet on whale trading outcomes.
+                Start by placing your first bet on event market outcomes.
               </p>
               <Link href="/">
                 <Button className="bg-[#acf3e1] text-black hover:bg-[#acf3e1]/90">

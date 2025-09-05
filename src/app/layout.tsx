@@ -1,16 +1,20 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Montserrat } from 'next/font/google'
 import './globals.css'
-import { WalletProvider } from '@/contexts/WalletContext'
+import { PrivyWalletProvider } from '@/contexts/PrivyWalletContext'
 
-const inter = Inter({ subsets: ['latin'] })
+const montserrat = Montserrat({ 
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800', '900'],
+  variable: '--font-montserrat'
+})
 
 export const metadata: Metadata = {
   title: 'HYPIQ - Prediction Markets',
   description: 'Advanced prediction markets platform. Trade on whale positions and crypto outcomes. predict/earn.',
   icons: {
-    icon: '/HYPIQ-logo-white-vector.svg',
-    apple: '/HYPIQ-logo-white-vector.svg',
+    icon: '/Logo.svg',
+    apple: '/Logo.svg',
   },
 }
 
@@ -24,13 +28,13 @@ export default function RootLayout({
       <head>
         <title>HYPIQ - Prediction Markets</title>
         <meta name="description" content="Advanced prediction markets platform. Trade on whale positions and crypto outcomes. predict/earn." />
-        <link rel="icon" href="/HYPIQ-logo-white-vector.svg" type="image/svg+xml" />
-        <link rel="apple-touch-icon" href="/HYPIQ-logo-white-vector.svg" />
+        <link rel="icon" href="/Logo.svg" type="image/svg+xml" />
+        <link rel="apple-touch-icon" href="/Logo.svg" />
       </head>
-      <body className={inter.className}>
-        <WalletProvider>
+      <body className={montserrat.className}>
+        <PrivyWalletProvider>
           {children}
-        </WalletProvider>
+        </PrivyWalletProvider>
       </body>
     </html>
   )

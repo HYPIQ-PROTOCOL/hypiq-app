@@ -16,13 +16,16 @@ module.exports = {
   		}
   	},
   	extend: {
+  		fontFamily: {
+  			'sans': ['Montserrat', 'sans-serif'],
+  		},
   		colors: {
-  			// HYPIQ Color Scheme
+  			// HYPIQ Brand Color Palette
   			hypiq: {
-  				background: '#0c221d',
-  				card: '#12191d',
-  				accent: '#1a2125',
-  				text: '#ffffff'
+  				black: '#131818',        // Brand black for text
+  				'anti-flash': '#F9FAFB', // Anti-flash white for card backgrounds
+  				platinum: '#ECEFF2',     // Platinum for page backgrounds
+  				white: '#FFFFFF'         // Pure white for specific elements
   			},
   			// Kalshi-inspired colors
   			kalshi: {

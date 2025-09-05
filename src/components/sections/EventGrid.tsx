@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Card } from '@/components/ui/card'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
@@ -112,40 +112,155 @@ const mockEvents: EventMarket[] = [
   },
 ]
 
-export function EventCard({ market }: { market: EventMarket }) {
+export function EventCard({ market, onAddToChain, cardIndex, tutorialStep, selectedOptions, onSelectionChange }: { 
+  market: EventMarket; 
+  onAddToChain?: (market: EventMarket, cardElement?: HTMLElement) => void; 
+  cardIndex?: number; 
+  tutorialStep?: number; 
+  selectedOptions?: {[key: string]: 'yes' | 'no' | null}; 
+  onSelectionChange?: (marketId: string, optionName: string, selection: 'yes' | 'no') => void; 
+}) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const getCategoryBadge = (id: string) => {
+    switch (id) {
+      case 'finance':
+        return { label: 'Finance', color: 'bg-blue-100 text-blue-800 border-blue-200' }
+      case 'sports':
+        return { label: 'Sports', color: 'bg-green-100 text-green-800 border-green-200' }
+      case 'crypto':
+        return { label: 'Crypto', color: 'bg-orange-100 text-orange-800 border-orange-200' }
+      default:
+        return { label: 'Market', color: 'bg-gray-100 text-gray-800 border-gray-200' }
+    }
+  }
+
+  const formatVolume = (volume: number) => {
+    if (volume >= 1000000) {
+      return `$${(volume / 1000000).toFixed(1)}M`
+    } else if (volume >= 1000) {
+      return `$${(volume / 1000).toFixed(0)}K`
+    }
+    return `$${volume}`
+  }
+
+  const badge = getCategoryBadge(market.id)
+
   return (
-    <Card className="bg-white/10 border border-white/20 rounded-lg p-4 text-white">
-      <div className="flex items-center gap-3 mb-3">
-        <Image src={market.imageUrl || 'https://picsum.photos/seed/placeholder/96/96'} alt="event" width={40} height={40} className="w-10 h-10 rounded-md object-cover border border-white/10" />
-        <h3 className="text-base font-semibold">{market.title}</h3>
+    <Card ref={cardRef} className="bg-white border border-gray-200 rounded-2xl px-5 pt-5 pb-4 text-gray-900 hover:bg-gray-50 hover:border-gray-300 shadow-sm hover:shadow-md transition-all duration-200 w-full font-montserrat font-normal">
+      {/* Header with badge and volume */}
+      <div className="flex items-center justify-between mb-4">
+        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${badge.color}`}>
+          {badge.label}
+        </span>
+        <span className="text-xs text-gray-500 font-mono">
+          {formatVolume(market.volume)}
+        </span>
       </div>
 
-      <div className="space-y-3">
+      {/* Separator */}
+      <div className="h-px w-full bg-gradient-to-r from-transparent via-gray-200 to-transparent mb-4" />
+
+      <div className="flex items-center gap-2 md:gap-3 mb-6">
+        <Image 
+          src={market.imageUrl || 'https://picsum.photos/seed/placeholder/96/96'} 
+          alt="event" 
+          width={60} 
+          height={60} 
+          className="w-14 h-14 md:w-12 md:h-12 rounded-md object-cover border border-gray-200 flex-shrink-0" 
+          style={{ width: 'auto', height: 'auto' }}
+        />
+        <h3 className="text-md md:text-md font-bold text-gray-900 leading-tight">{market.title}</h3>
+      </div>
+
+      <div className="space-y-4 mb-6">
         {market.options.map((opt, idx) => {
           const isPrimary = idx === 0
           return (
-            <div key={opt.name} className="flex items-center gap-3">
-              <span className="text-sm text-white/90 w-28 shrink-0 truncate">{opt.name}</span>
+            <div key={opt.name} className="flex items-center gap-2">
+              <span className="text-sm text-gray-700 w-24 shrink-0 truncate">{opt.name}</span>
               <div className="flex-1">
-                <div className="flex items-center gap-3">
-                  <Progress
-                    value={opt.percent}
-                    className={`h-2 bg-white/10 ${isPrimary ? ' [&>div]:from-emerald-500 [&>div]:to-emerald-400' : ' [&>div]:from-red-500 [&>div]:to-rose-400'}`}
-                  />
-                  <span className="text-sm font-semibold tabular-nums w-10 text-right">{opt.percent}%</span>
+                <div className="flex items-center gap-2">
+                  <div className="relative h-2 w-full overflow-hidden rounded-full bg-gray-200">
+                    <div 
+                      className={`h-full transition-all ${
+                        isPrimary 
+                          ? 'bg-gradient-to-r from-emerald-500 to-emerald-400' 
+                          : 'bg-gradient-to-r from-red-500 to-rose-400'
+                      }`}
+                      style={{ width: `${opt.percent}%` }}
+                    />
+                  </div>
+                  <span className="text-sm font-semibold tabular-nums w-10 text-right text-gray-900">{opt.percent}%</span>
                 </div>
               </div>
-              <div className="flex items-center gap-1">
-                <Button size="sm" variant="outline" className="h-7 px-3 border-white/20 text-white hover:bg-white/10">Yes</Button>
-                <Button size="sm" variant="outline" className="h-7 px-3 border-white/20 text-white hover:bg-white/10">No</Button>
+              <div 
+                className="flex items-center gap-1" 
+                data-tutorial={
+                  (tutorialStep === 1 && cardIndex === 0) || 
+                  (tutorialStep === 4 && cardIndex === 1) || 
+                  (tutorialStep === 7 && cardIndex === 2) 
+                    ? "yes-no-buttons" : ""
+                }
+              >
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelectionChange?.(market.id, opt.name, 'yes');
+                  }}
+                  className={`h-6 px-2 text-xs rounded-full border transition-all duration-200 focus:outline-none focus:ring-0 focus-visible:ring-0 active:scale-95 ${
+                    selectedOptions?.[opt.name] === 'yes' 
+                      ? 'bg-emerald-200 border-emerald-400 text-emerald-800 font-semibold shadow-sm' 
+                      : 'bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-700 hover:text-emerald-700'
+                  }`}
+                >
+                  Yes
+                </button>
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelectionChange?.(market.id, opt.name, 'no');
+                  }}
+                  className={`h-6 px-2 text-xs rounded-full border transition-all duration-200 focus:outline-none focus:ring-0 focus-visible:ring-0 active:scale-95 ${
+                    selectedOptions?.[opt.name] === 'no' 
+                      ? 'bg-red-200 border-red-400 text-red-800 font-semibold shadow-sm' 
+                      : 'bg-red-50 hover:bg-red-100 border-red-200 text-red-700 hover:text-red-700'
+                  }`}
+                >
+                  No
+                </button>
               </div>
             </div>
           )
         })}
       </div>
 
-      <div className="mt-4 text-xs text-white/60">
-        ${market.volume.toLocaleString()}
+      {/* Separator */}
+      <div className="h-px w-full bg-gradient-to-r from-transparent via-gray-200 to-transparent mt-4" />
+
+      {/* Add to Chain Button */}
+      <div className="relative overflow-hidden rounded-b-2xl -mx-5 -mb-4 px-5 pb-0 pt-0">
+        <div 
+          className="relative flex justify-center items-center gap-2 cursor-pointer hover:opacity-80 transition-all duration-200 py-2"
+          onClick={() => onAddToChain?.(market, cardRef.current || undefined)}
+        >
+          <div 
+            className="flex items-center gap-2" 
+            data-tutorial={
+              (tutorialStep === 2 || tutorialStep === 3) && cardIndex === 0 ? "add-to-chain-1" :
+              (tutorialStep === 5 || tutorialStep === 6) && cardIndex === 1 ? "add-to-chain-2" :
+              (tutorialStep === 8 || tutorialStep === 9) && cardIndex === 2 ? "add-to-chain-3" :
+              ""
+            }
+          >
+            <div 
+              className="w-6 h-6 rounded-full flex items-center justify-center text-black text-sm font-medium"
+              style={{ backgroundColor: '#ECEFF2' }}
+            >
+              +
+            </div>
+            <span className="text-xs font-medium text-black">Add to chain</span>
+          </div>
+        </div>
       </div>
     </Card>
   )
@@ -155,13 +270,16 @@ export default function EventGrid() {
   const [events] = useState<EventMarket[]>(mockEvents)
 
   return (
-    <div className="container mx-auto px-4 py-8 bg-[#0e241f]">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {events.map((m) => (
-          <EventCard key={m.id} market={m} />
-        ))}
+    <section className="py-8 bg-hypiq-platinum">
+      {/* Events Grid */}
+      <div className="container mx-auto px-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {events.map((m) => (
+            <EventCard key={m.id} market={m} />
+          ))}
+        </div>
       </div>
-    </div>
+    </section>
   )
 }
 
